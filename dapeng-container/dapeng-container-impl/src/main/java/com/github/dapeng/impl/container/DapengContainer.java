@@ -78,6 +78,9 @@ public class DapengContainer implements Container {
         this.initPlugins();
     }
 
+    /**
+     * 初始化插件
+     */
     private void initPlugins() {
         Plugin zookeeperPlugin = new ZookeeperRegistryPlugin(this);
         Plugin taskSchedulePlugin = new TaskSchedulePlugin(this);
@@ -86,8 +89,7 @@ public class DapengContainer implements Container {
         //add messagePlugin
 //        Plugin messagePlugin = new KafkaMessagePlugin();
         // TODO
-        //if (!"plugin".equals(RUN_MODE)) {
-        if ("logback".equals(RUN_MODE)) {
+        if (!"plugin".equals(RUN_MODE)) {
             Plugin logbackPlugin = new LogbackPlugin();
             registerPlugin(logbackPlugin);
         }
