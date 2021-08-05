@@ -25,6 +25,7 @@ import com.github.dapeng.api.healthcheck.DoctorFactory;
 import com.github.dapeng.api.lifecycle.LifecycleProcessor;
 import com.github.dapeng.api.lifecycle.LifecycleProcessorFactory;
 import com.github.dapeng.core.Application;
+import com.github.dapeng.core.ApplicationContext;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.Filter;
@@ -74,6 +75,41 @@ public class DapengContainer implements Container {
 
     public DapengContainer(List<ClassLoader> applicationCls) {
         this.applicationCls = applicationCls;
+        this.initPlugins();
+    }
+
+    private void initPlugins() {
+        Plugin zookeeperPlugin = new ZookeeperRegistryPlugin(this);
+        Plugin taskSchedulePlugin = new TaskSchedulePlugin(this);
+        Plugin nettyPlugin = new NettyPlugin(this);
+        Plugin mbeanAgentPlugin = new MbeanAgentPlugin(this);
+        //add messagePlugin
+//        Plugin messagePlugin = new KafkaMessagePlugin();
+        // TODO
+        //if (!"plugin".equals(RUN_MODE)) {
+        if ("logback".equals(RUN_MODE)) {
+            Plugin logbackPlugin = new LogbackPlugin();
+            registerPlugin(logbackPlugin);
+        }
+
+        registerPlugin(nettyPlugin);
+        registerPlugin(zookeeperPlugin);
+        //SpringBoot模式不需要SpringAppLoader
+        if (!"springboot".equals(RUN_MODE)) {
+            Plugin springAppLoader = new SpringAppLoader(this, applicationCls);
+            registerPlugin(springAppLoader);
+        }
+        registerPlugin(taskSchedulePlugin);
+        registerPlugin(mbeanAgentPlugin);
+
+        //add messagePlugin
+//        registerPlugin(messagePlugin);
+
+        if ("plugin".equals(RUN_MODE)) {
+            Plugin apiDocPlugin = new ApiDocPlugin(this);
+            registerPlugin(apiDocPlugin);
+        }
+
     }
 
     @Override
@@ -116,6 +152,13 @@ public class DapengContainer implements Container {
     public void registerPlugin(Plugin plugin) {
         LOGGER.info(getClass().getSimpleName() + "::registerPlugin plugin[" + plugin.getClass().getSimpleName() + "]");
         this.plugins.add(plugin);
+    }
+
+    @Override
+    public void registerPlugin(int idx, Plugin plugin) {
+        LOGGER.info(getClass().getSimpleName() + "::registerPlugin idx[" + idx + "] plugin[" + plugin.getClass().getSimpleName() + "]");
+        this.plugins.add(idx, plugin);
+
     }
 
     @Override
@@ -211,7 +254,7 @@ public class DapengContainer implements Container {
         DoctorFactory.createDoctor(this.getClass().getClassLoader());
         LifecycleProcessorFactory.createLifecycleProcessor(this.getClass().getClassLoader());
         //3. 初始化appLoader,dapengPlugin 应该用serviceLoader的方式去加载
-        Plugin springAppLoader = new SpringAppLoader(this, applicationCls);
+        /**
         Plugin zookeeperPlugin = new ZookeeperRegistryPlugin(this);
         Plugin taskSchedulePlugin = new TaskSchedulePlugin(this);
         Plugin nettyPlugin = new NettyPlugin(this);
@@ -219,14 +262,22 @@ public class DapengContainer implements Container {
         //add messagePlugin
 //        Plugin messagePlugin = new KafkaMessagePlugin();
         // TODO
-        if (!"plugin".equals(RUN_MODE)) {
+        //if (!"plugin".equals(RUN_MODE)) {
+        if ("logback".equals(RUN_MODE)) {
             Plugin logbackPlugin = new LogbackPlugin();
             registerPlugin(logbackPlugin);
         }
 
         registerPlugin(nettyPlugin);
         registerPlugin(zookeeperPlugin);
-        registerPlugin(springAppLoader);
+        //SpringBoot模式不需要SpringAppLoader
+        if (!"springboot".equals(RUN_MODE)) {
+            Plugin springAppLoader = new SpringAppLoader(this, applicationCls);
+            registerPlugin(springAppLoader);
+        } else {
+            //Plugin springBootLoader = new SpringBootLoader(this, applicationCls, applicationContext);
+            //registerPlugin(springBootLoader);
+        }
         registerPlugin(taskSchedulePlugin);
         registerPlugin(mbeanAgentPlugin);
 
@@ -237,6 +288,7 @@ public class DapengContainer implements Container {
             Plugin apiDocPlugin = new ApiDocPlugin(this);
             registerPlugin(apiDocPlugin);
         }
+         **/
 
         //4.启动Apploader， plugins
         getPlugins().forEach(Plugin::start);

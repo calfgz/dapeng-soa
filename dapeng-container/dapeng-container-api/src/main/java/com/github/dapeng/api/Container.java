@@ -72,6 +72,14 @@ public interface Container {
     void registerPlugin(Plugin plugin);
 
     /**
+     * 注册插件到指定顺序
+     * 某些插件有执行顺序
+     * @param idx
+     * @param plugin
+     */
+    void registerPlugin(int idx, Plugin plugin);
+
+    /**
      * 卸载插件
      * @param plugin
      */
